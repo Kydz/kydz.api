@@ -6,37 +6,81 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/Kydz/kydz.api"
 )
 
-func articleHanlder(w http.ResponseWriter, r *http.Request) {
-	urls := strings.Split(r.URL.Path, "?")
+func articlesHanlder(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
-		path := urls[0][len("/article"):]
-		log.Print(path)
-		if len(path) == 0 {
 			articleDTO := &db.ArticleDTO{}
-			page, _ := strconv.Atoi(r.Form.Get("page"))
-			perpage, _ := strconv.Atoi(r.Form.Get("perpage"))
+			page := getPage(r)
+			perpage := getPerpage(r)
 			rows := articleDTO.QueryList(page, perpage)
-			list, _ := json.Marshal(rows)
+			list, err := json.Marshal(rows)
+			if err != nil {
+				log.Fatal(err)
+			}
 			fmt.Fprint(w, string(list))
-
-		} else {
-			// id := path[1:]
-		}
 		break
-	case http.MethodPost:
-		break
-
+	default:
+		http.NotFound(w, r)
 	}
 }
 
+func articleHanlder(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		articleDTO := &db.ArticleDTO{}
+		param := r.URL.Path[len("/article/"):]
+		id := convertToInt(param)
+		article := articleDTO.QuerySingle(id)
+		row, err := json.Marshal(article)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Fprint(w, string(row))
+		break
+	default:
+		http.NotFound(w, r)
+	}
+}
+
+func getPage(r *http.Request) int {
+	value := getFromForm(r, "page", "0")
+	page := convertToInt(value)
+	return page
+}
+
+func getPerpage(r *http.Request) int {
+	value := getFromForm(r, "perpage", "20")
+	perpage := convertToInt(value)
+	return perpage
+}
+
+func convertToInt(value string ) int {
+	converted, err := strconv.Atoi(value)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return converted
+}
+
+func getFromForm(r *http.Request, key string, defaultValue string) string {
+	err := r.ParseForm()
+	if err != nil {
+		log.Fatal(err)
+	}
+	value := r.Form.Get(key)
+	if len(value) == 0 {
+		value = defaultValue
+	}
+	return value
+}
+
 func main() {
-	http.HandleFunc("/article", articleHanlder)
+	http.HandleFunc("/article", articlesHanlder)
+	http.HandleFunc("/article/", articleHanlder)
 	err := http.ListenAndServe(":8088", nil)
 	log.Fatal(err)
 }
