@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"log"
 
-	"github.com/davecgh/go-spew/spew"
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -48,8 +47,7 @@ func (ad *ArticleDTO) QuerySingle(queryId int) (article Article) {
 		log.Print("Error: prepare [article sql] failed:")
 		panic(err)
 	}
-	row, err := statement.QueryRow(queryId)
-	defer row.Close()
+	row := statement.QueryRow(queryId)
 	if err != nil {
 		log.Printf("Error: query single %s failed:", string(queryId))
 		panic(err)
