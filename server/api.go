@@ -11,17 +11,19 @@ import (
 )
 
 func articlesHanlder(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:4200")
+	w.Header().Set("Content-Type", "application/xml")
 	switch r.Method {
 	case http.MethodGet:
-			articleDTO := &db.ArticleDTO{}
-			page := getPage(r)
-			perpage := getPerpage(r)
-			rows := articleDTO.QueryList(page, perpage)
-			list, err := json.Marshal(rows)
-			if err != nil {
-				log.Fatal(err)
-			}
-			fmt.Fprint(w, string(list))
+		articleDTO := &db.ArticleDTO{}
+		page := getPage(r)
+		perpage := getPerpage(r)
+		rows := articleDTO.QueryList(page, perpage)
+		list, err := json.Marshal(rows)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Fprint(w, string(list))
 		break
 	default:
 		http.NotFound(w, r)
@@ -29,6 +31,8 @@ func articlesHanlder(w http.ResponseWriter, r *http.Request) {
 }
 
 func articleHanlder(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:4200")
+	w.Header().Set("Content-Type", "application/xml")
 	switch r.Method {
 	case http.MethodGet:
 		articleDTO := &db.ArticleDTO{}
@@ -58,7 +62,7 @@ func getPerpage(r *http.Request) int {
 	return perpage
 }
 
-func convertToInt(value string ) int {
+func convertToInt(value string) int {
 	converted, err := strconv.Atoi(value)
 	if err != nil {
 		log.Fatal(err)

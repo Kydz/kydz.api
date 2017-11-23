@@ -36,12 +36,13 @@ func (ad *ArticleDTO) QueryList(page int, perpage int) []Article {
 		list[index] = Article{Id: id, Title: title, Brief: brief, Content: content}
 		index++
 	}
+	db.Close()
 	return list
 }
 
 func (ad *ArticleDTO) QuerySingle(queryId int) (article Article) {
 	db := getDB()
-	queryString :=`SELECT id, title, brief, content FROM articles WHERE id = ? AND active = 1`
+	queryString := `SELECT id, title, brief, content FROM articles WHERE id = ? AND active = 1`
 	statement, err := db.Prepare(queryString)
 	if err != nil {
 		log.Print("Error: prepare [article sql] failed:")
@@ -58,6 +59,7 @@ func (ad *ArticleDTO) QuerySingle(queryId int) (article Article) {
 	var content string
 	row.Scan(&id, &title, &brief, &content)
 	article = Article{Id: id, Title: title, Brief: brief, Content: content}
+	db.Close()
 	return article
 }
 
