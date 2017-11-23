@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"log"
 
+	"gopkg.in/russross/blackfriday.v2"
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -31,9 +32,10 @@ func (ad *ArticleDTO) QueryList(page int, perpage int) []Article {
 		var id int
 		var title string
 		var brief string
-		var content string
+		var content []byte
 		rows.Scan(&id, &title, &brief, &content)
-		list[index] = Article{Id: id, Title: title, Brief: brief, Content: content}
+		markdown := blackfriday.Run(content)
+		list[index] = Article{Id: id, Title: title, Brief: brief, Content: string(markdown)}
 		index++
 	}
 	db.Close()
@@ -56,9 +58,10 @@ func (ad *ArticleDTO) QuerySingle(queryId int) (article Article) {
 	var id int
 	var title string
 	var brief string
-	var content string
+	var content []byte
 	row.Scan(&id, &title, &brief, &content)
-	article = Article{Id: id, Title: title, Brief: brief, Content: content}
+	markdown := blackfriday.Run(content)
+	article = Article{Id: id, Title: title, Brief: brief, Content: string(markdown)}
 	db.Close()
 	return article
 }
