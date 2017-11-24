@@ -67,7 +67,7 @@ func (ad *ArticleDTO) QuerySingle(queryId int) (article Article) {
 }
 
 func getDB() *sql.DB {
-	db, err := sql.Open("mysql", "tuber:M0nst3r$hoe@tcp(localhost:3306)/education")
+	db, err := sql.Open("mysql", "root@/kydz")
 	if err != nil {
 		log.Print("Error: Opening [kydz] failed:")
 		panic(err)
