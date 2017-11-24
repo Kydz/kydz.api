@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"log"
 
-	"gopkg.in/russross/blackfriday.v2"
 	_ "github.com/go-sql-driver/mysql"
+	"gopkg.in/russross/blackfriday.v2"
 )
 
 type ArticleDTO struct{}
@@ -34,8 +34,8 @@ func (ad *ArticleDTO) QueryList(page int, perpage int) []Article {
 		var brief string
 		var content []byte
 		rows.Scan(&id, &title, &brief, &content)
-		markdown := blackfriday.Run(content)
-		list[index] = Article{Id: id, Title: title, Brief: brief, Content: string(markdown)}
+		contentHtml := parseMarkdonw(content)
+		list[index] = Article{Id: id, Title: title, Brief: brief, Content: contentHtml}
 		index++
 	}
 	db.Close()
@@ -60,19 +60,25 @@ func (ad *ArticleDTO) QuerySingle(queryId int) (article Article) {
 	var brief string
 	var content []byte
 	row.Scan(&id, &title, &brief, &content)
-	markdown := blackfriday.Run(content)
-	article = Article{Id: id, Title: title, Brief: brief, Content: string(markdown)}
+	contentHtml := parseMarkdonw(content)
+	article = Article{Id: id, Title: title, Brief: brief, Content: contentHtml}
 	db.Close()
 	return article
 }
 
 func getDB() *sql.DB {
-	db, err := sql.Open("mysql", "root@/kydz")
+	db, err := sql.Open("mysql", "tuber:M0nst3r$hoe@tcp(localhost:3306)/education")
 	if err != nil {
 		log.Print("Error: Opening [kydz] failed:")
 		panic(err)
 	}
 	return db
+}
+
+func parseMarkdonw(input []byte) string {
+	output := blackfriday.Run(input)
+	html := string(output)
+	return html
 }
 
 type Article struct {
