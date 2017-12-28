@@ -85,6 +85,7 @@ func getFromForm(r *http.Request, key string, defaultValue string) string {
 func main() {
 	http.HandleFunc("/article", articlesHanlder)
 	http.HandleFunc("/article/", articleHanlder)
+	log.Println("server start")
 	err := http.ListenAndServe(":8088", nil)
 	log.Fatal(err)
 }

@@ -34,9 +34,13 @@ func (ad *ArticleDTO) QueryList(page int, perpage int) []Article {
 		var brief string
 		var content []byte
 		rows.Scan(&id, &title, &brief, &content)
-		contentHtml := parseMarkdonw(content)
-		list[index] = Article{Id: id, Title: title, Brief: brief, Content: contentHtml}
-		index++
+		if id > 0 {
+			contentHTML := parseMarkdonw(content)
+			list[index] = Article{Id: id, Title: title, Brief: brief, Content: contentHTML}
+			index++
+		} else {
+			continue
+		}
 	}
 	db.Close()
 	return list
@@ -60,8 +64,8 @@ func (ad *ArticleDTO) QuerySingle(queryId int) (article Article) {
 	var brief string
 	var content []byte
 	row.Scan(&id, &title, &brief, &content)
-	contentHtml := parseMarkdonw(content)
-	article = Article{Id: id, Title: title, Brief: brief, Content: contentHtml}
+	contentHTML := parseMarkdonw(content)
+	article = Article{Id: id, Title: title, Brief: brief, Content: contentHTML}
 	db.Close()
 	return article
 }
