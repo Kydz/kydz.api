@@ -83,6 +83,7 @@ func getFromForm(r *http.Request, key string, defaultValue string) string {
 }
 
 func main() {
+	http.HandleFunc("/", http.NotFound)
 	http.HandleFunc("/article", articlesHanlder)
 	http.HandleFunc("/article/", articleHanlder)
 	log.Println("server start")
