@@ -1,18 +1,11 @@
-package db
+package business
 
-import (
-	"database/sql"
-	"log"
-
-	_ "github.com/go-sql-driver/mysql"
-	"gopkg.in/russross/blackfriday.v2"
-)
+import "log"
 
 type ArticleDTO struct{}
 
 func (ad *ArticleDTO) QueryList(page int, perpage int) []Article {
 	var list = make([]Article, perpage)
-	db := getDB()
 	offset := page * perpage
 	limit := perpage
 	queryString := `SELECT id, title, brief, content FROM articles WHERE active = 1 limit ?, ?`
@@ -35,19 +28,16 @@ func (ad *ArticleDTO) QueryList(page int, perpage int) []Article {
 		var content []byte
 		rows.Scan(&id, &title, &brief, &content)
 		if id > 0 {
-			contentHTML := parseMarkdonw(content)
-			list[index] = Article{Id: id, Title: title, Brief: brief, Content: contentHTML}
+			list[index] = Article{Id: id, Title: title, Brief: brief, Content: string(content)}
 			index++
 		} else {
 			continue
 		}
 	}
-	db.Close()
 	return list
 }
 
 func (ad *ArticleDTO) QuerySingle(queryId int) (article Article) {
-	db := getDB()
 	queryString := `SELECT id, title, brief, content FROM articles WHERE id = ? AND active = 1`
 	statement, err := db.Prepare(queryString)
 	if err != nil {
@@ -64,30 +54,17 @@ func (ad *ArticleDTO) QuerySingle(queryId int) (article Article) {
 	var brief string
 	var content []byte
 	row.Scan(&id, &title, &brief, &content)
-	contentHTML := parseMarkdonw(content)
-	article = Article{Id: id, Title: title, Brief: brief, Content: contentHTML}
-	db.Close()
+	article = Article{Id: id, Title: title, Brief: brief, Content: string(content)}
 	return article
 }
 
-func getDB() *sql.DB {
-	db, err := sql.Open("mysql", "root:1989222@/kydz")
+func (ad *ArticleDTO) UpdateSingle(queryId int, field string, value string) (err error) {
+	queryString := "UPDATE articles SET " + field + " = \"" + value + "\" WHERE id = " + string(queryId) + ";"
+	log.Printf("Excuted SQL: %s", queryString)
+	_, err = db.Exec(queryString, field, value, queryId)
 	if err != nil {
-		log.Print("Error: Opening [kydz] failed:")
+		log.Printf("Error: update article %s fialed:", string(queryId))
 		panic(err)
 	}
-	return db
-}
-
-func parseMarkdonw(input []byte) string {
-	output := blackfriday.Run(input)
-	html := string(output)
-	return html
-}
-
-type Article struct {
-	Id      int
-	Title   string
-	Brief   string
-	Content string
+	return err
 }
