@@ -1,4 +1,4 @@
-package business
+package models
 
 import (
 	"database/sql"
@@ -25,4 +25,5 @@ type Article struct {
 	Title   string
 	Brief   string
 	Content string
+	Active	int
 }

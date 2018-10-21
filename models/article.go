@@ -1,6 +1,9 @@
-package business
+package models
 
-import "log"
+import (
+	"github.com/Kydz/kydz.api/utils"
+	"log"
+)
 
 type ArticleDTO struct{}
 
@@ -38,7 +41,7 @@ func (ad *ArticleDTO) QueryList(page int, perpage int) []Article {
 }
 
 func (ad *ArticleDTO) QuerySingle(queryId int) (article Article) {
-	queryString := `SELECT id, title, brief, content FROM articles WHERE id = ? AND active = 1`
+	queryString := `SELECT id, title, brief, content, active FROM articles WHERE id = ? AND active = 1`
 	statement, err := db.Prepare(queryString)
 	if err != nil {
 		log.Print("Error: prepare [article sql] failed:")
@@ -53,17 +56,31 @@ func (ad *ArticleDTO) QuerySingle(queryId int) (article Article) {
 	var title string
 	var brief string
 	var content []byte
-	row.Scan(&id, &title, &brief, &content)
-	article = Article{Id: id, Title: title, Brief: brief, Content: string(content)}
+	var active int
+	err = row.Scan(&id, &title, &brief, &content, &active)
+	if err != nil {
+		panic(err)
+	}
+	article = Article{Id: id, Title: title, Brief: brief, Content: string(content), Active: active}
 	return article
 }
 
-func (ad *ArticleDTO) UpdateSingle(queryId int, field string, value string) (err error) {
-	queryString := "UPDATE articles SET " + field + " = \"" + value + "\" WHERE id = " + string(queryId) + ";"
+func (ad *ArticleDTO) UpdateSingle(queryId int, article Article) (err error) {
+	queryString := `UPDATE articles SET `
+	if article.Brief != "" {
+		queryString += `brief = "` + article.Brief + `", `
+	}
+	if article.Title != "" {
+		queryString += `title = "` + article.Title + `", `
+	}
+	if article.Content != "" {
+		queryString += `content = "` + article.Content + `", `
+	}
+	queryString += `active = ` + utils.IntegerToString(article.Active) + ` WHERE id = ` + utils.IntegerToString(queryId) + `;`
 	log.Printf("Excuted SQL: %s", queryString)
-	_, err = db.Exec(queryString, field, value, queryId)
+	_, err = db.Exec(queryString)
 	if err != nil {
-		log.Printf("Error: update article %s fialed:", string(queryId))
+		log.Printf("Error: update article %s failed:", string(queryId))
 		panic(err)
 	}
 	return err
