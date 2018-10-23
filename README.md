@@ -1,3 +1,3 @@
 # kydz.api
 
-API serve for http://kydz.me written in go
+API serve for http://kydz.site written in go
