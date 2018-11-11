@@ -13,13 +13,12 @@ import (
 
 func ArticlesHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:4200")
-	w.Header().Set("Content-Type", "application/xml")
+	w.Header().Set("Content-Type", "application/json")
 	switch r.Method {
 	case http.MethodGet:
-		articleDTO := &models.ArticleDTO{}
-		page := getPage(r)
-		perpage := getPerpage(r)
-		rows := articleDTO.QueryList(page, perpage)
+		offset := getOffset(r)
+		limit := getLimit(r)
+		rows := models.QueryArticleList(offset, limit)
 		jsonizeResponse(rows, w, r)
 		break
 	default:
@@ -28,14 +27,11 @@ func ArticlesHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func ArticleHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:4200")
-	w.Header().Set("Content-Type", "application/xml")
 	param := r.URL.Path[len("/article/"):]
 	id := utils.StringToInteger(param)
-	articleDTO := &models.ArticleDTO{}
 	switch r.Method {
 	case http.MethodGet:
-		article := articleDTO.QuerySingle(id)
+		article := models.QueryArticleSingle(id)
 		jsonizeResponse(article, w, r)
 		break
 	case http.MethodPut:
@@ -49,7 +45,7 @@ func ArticleHandler(w http.ResponseWriter, r *http.Request) {
 			log.Fatal(err)
 			errorResponse("Parse Json failed, got: " + string(bodyBytes), w, r)
 		}
-		err = articleDTO.UpdateSingle(id, article)
+		err = models.UpdateArticleSingle(id, article)
 		if err != nil {
 			log.Fatal(err)
 			errorResponse("Update article failed", w, r)
@@ -65,16 +61,17 @@ func ArticleHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func getPage(r *http.Request) int {
-	value := getFromForm(r, "page", "0")
-	page := utils.StringToInteger(value)
-	return page
+func getOffset(r *http.Request) int {
+	value := getFromForm(r, "o", "0")
+	log.Print(value)
+	offset := utils.StringToInteger(value)
+	return offset
 }
 
-func getPerpage(r *http.Request) int {
-	value := getFromForm(r, "perpage", "20")
-	perpage := utils.StringToInteger(value)
-	return perpage
+func getLimit(r *http.Request) int {
+	value := getFromForm(r, "l", "20")
+	limit := utils.StringToInteger(value)
+	return limit
 }
 
 func jsonizeResponse(data interface{}, w http.ResponseWriter, r *http.Request) {
@@ -95,13 +92,15 @@ func parseJsonToArticle(jsonBytes []byte) (article models.Article, err error) {
 }
 
 func errorResponse(message string, w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:4200")
+	w.Header().Set("Content-Type", "application/json")
 	var response = `{"error": true, "message":` + message + `}`
 	normalResponse(response, w, r)
 }
 
 func normalResponse(response string, w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:4200")
-	w.Header().Set("Content-Type", "application/xml")
+	w.Header().Set("Content-Type", "application/json")
 	fmt.Fprint(w, string(response))
 }
 
