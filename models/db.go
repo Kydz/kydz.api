@@ -2,7 +2,6 @@ package models
 
 import (
 	"database/sql"
-	"github.com/Kydz/kydz.api/utils"
 	"log"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -19,73 +18,54 @@ func InitDB() {
 	}
 }
 
+func logQuery(qs string, args ... interface{}) {
+	ls := `[execute DB query]:` + qs
+	if len(args) > 0 {
+		log.Printf(ls, args)
+	} else {
+		log.Println(ls)
+	}
+}
+
+func GetArticleList(offset int, limit int) (list ArticleList) {
+	list.Total = queryArticleTotal()
+	if list.Total < offset {
+		list.Rows = make([]Article, 0)
+	} else {
+		list.Rows = queryArticleList(offset, limit)
+	}
+	return list
+}
+
+func GetArticle(id int, hit bool) (a Article) {
+	return queryArticleSingle(id, hit)
+}
+
+func PutArticle(id int, a Article) error {
+	a.Id = id
+	return updateArticleSingle(a)
+}
+
+func PostArticle(a Article) (id int64, err error) {
+	id, err = insertArticle(a)
+	return id, err
+}
+
+func DelArticle(id int) (int64, error) {
+	return deleteArticle(id)
+}
+
+type ArticleList struct {
+	Total int       `json:"total"`
+	Rows  []Article `json:"rows"`
+}
+
 type Article struct {
 	Id      int    `json:"id"`
 	Title   string `json:"title"`
 	Brief   string `json:"brief"`
 	Content string `json:"content"`
 	Active  int    `json:"active"`
-}
-
-func QueryArticleList(offset int, limit int) []Article {
-	var list []Article
-	queryString := `SELECT id, title, brief FROM articles WHERE active = 1 limit ?, ?`
-	log.Printf("db-excuted %d, %d, %s", offset, limit, queryString)
-	statement, err := db.Prepare(queryString)
-	if err != nil {
-		log.Print("Error: prepare [articles sql] failed:")
-		panic(err)
-	}
-	rows, err := statement.Query(offset, limit)
-	defer rows.Close()
-	if err != nil {
-		log.Print("Error: query [article] failed:")
-		panic(err)
-	}
-	for rows.Next() {
-		var a Article
-		rows.Scan(&a.Id, &a.Title, &a.Brief)
-		list = append(list, a);
-	}
-	return list
-}
-
-func QueryArticleSingle(queryId int) (a Article) {
-	queryString := `SELECT id, title, brief, content, active FROM articles WHERE id = ? AND active = 1`
-	statement, err := db.Prepare(queryString)
-	if err != nil {
-		log.Print("Error: prepare [article sql] failed:")
-		panic(err)
-	}
-	row := statement.QueryRow(queryId)
-	if err != nil {
-		log.Printf("Error: query single %s failed:", string(queryId))
-		panic(err)
-	}
-	err = row.Scan(&a.Id, &a.Title, &a.Brief, &a.Content, &a.Active)
-	if err != nil {
-		panic(err)
-	}
-	return a
-}
-
-func UpdateArticleSingle(queryId int, article Article) (err error) {
-	queryString := `UPDATE articles SET `
-	if article.Brief != "" {
-		queryString += `brief = "` + article.Brief + `", `
-	}
-	if article.Title != "" {
-		queryString += `title = "` + article.Title + `", `
-	}
-	if article.Content != "" {
-		queryString += `content = "` + article.Content + `", `
-	}
-	queryString += `active = ` + utils.IntegerToString(article.Active) + ` WHERE id = ` + utils.IntegerToString(queryId) + `;`
-	log.Printf("Excuted SQL: %s", queryString)
-	_, err = db.Exec(queryString)
-	if err != nil {
-		log.Printf("Error: update article %s failed:", string(queryId))
-		panic(err)
-	}
-	return err
+	Hit     int    `json:"hit"`
+	Type    int    `json:"type"`
 }
