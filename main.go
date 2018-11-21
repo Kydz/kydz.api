@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/Kydz/kydz.api/Kouter"
 	"github.com/Kydz/kydz.api/handlers"
 	"github.com/Kydz/kydz.api/models"
 	"log"
@@ -9,10 +10,13 @@ import (
 
 func main() {
 	models.InitDB()
-	http.HandleFunc("/", http.NotFound)
-	http.HandleFunc("/article", handlers.ArticlesHandler)
-	http.HandleFunc("/article/", handlers.ArticleHandler)
+	k := Kouter.GetK()
+
+	k.Get("/article", handlers.GetArticles)
+	k.Post("/article", handlers.PostArticle)
+	k.Get("/article/", handlers.GetArticle)
+	k.Put("/article/", handlers.PutArticle)
+	k.Delete("/article/", handlers.DelArticle)
 	log.Println("server start")
-	err := http.ListenAndServe(":8088", nil)
-	log.Fatal(err)
+	log.Fatal(http.ListenAndServe(":8088", k))
 }

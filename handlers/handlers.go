@@ -11,114 +11,96 @@ import (
 	"net/http"
 )
 
-func ArticlesHandler(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case http.MethodGet:
-		qp := r.URL.Query()
-		offset := 0
-		limit := 20
-		if qp.Get("o") != "" {
-			offset = utils.StringToInteger(qp.Get("o"))
-		}
-		if qp.Get("l") != "" {
-			limit = utils.StringToInteger(qp.Get("l"))
-		}
-		rows := models.GetArticleList(offset, limit)
-		jsonizeResponse(rows, w, r)
-		break
-	case http.MethodPost:
-		a, err := getArticleFromRequestBody(r.Body)
-		if err != nil {
-			log.Fatal(err)
-			errorResponse("Parse Json failed", w, r)
-		}
-		id, err := models.PostArticle(a)
-		if err != nil {
-			log.Fatal(err)
-			errorResponse("Add article failed", w, r)
-		} else {
-			normalResponse("{\"success\": true, \"id\": "+utils.IntegerToString(int(id))+"}", w, r)
-		}
-		break
-	case http.MethodOptions:
-		corsResponse(w, r)
-		break
-	default:
-		http.NotFound(w, r)
+func GetArticles(w http.ResponseWriter, r *http.Request) {
+	qp := r.URL.Query()
+	offset := 0
+	limit := 20
+	if qp.Get("o") != "" {
+		offset = utils.StringToInteger(qp.Get("o"))
+	}
+	if qp.Get("l") != "" {
+		limit = utils.StringToInteger(qp.Get("l"))
+	}
+	rows := models.GetArticleList(offset, limit)
+	jsonizeResponse(rows, w)
+}
+
+func PostArticle(w http.ResponseWriter, r *http.Request) {
+	a, err := getArticleFromRequestBody(r.Body)
+	if err != nil {
+		log.Fatal(err)
+		errorResponse("Parse Json failed", w)
+	}
+	id, err := models.PostArticle(a)
+	if err != nil {
+		log.Fatal(err)
+		errorResponse("Add article failed", w)
+	} else {
+		normalResponse("{\"success\": true, \"id\": "+utils.IntegerToString(int(id))+"}", w)
 	}
 }
 
-func ArticleHandler(w http.ResponseWriter, r *http.Request) {
+func GetArticle(w http.ResponseWriter, r *http.Request) {
 	pm := r.URL.Path[len("/article/"):]
 	id := utils.StringToInteger(pm)
 	qp := r.URL.Query()
-	log.Printf("query params get: %+v", qp)
-	switch r.Method {
-	case http.MethodGet:
-		hit := true
-		if qp.Get("h") != "" {
-			hit = false
-		}
-		article := models.GetArticle(id, hit)
-		jsonizeResponse(article, w, r)
-		break
-	case http.MethodPut:
-		a, err := getArticleFromRequestBody(r.Body)
-		if err != nil {
-			log.Fatal(err)
-			errorResponse("Parse Json failed", w, r)
-		}
-		err = models.PutArticle(id, a)
-		if err != nil {
-			log.Fatal(err)
-			errorResponse("Update article failed", w, r)
-		} else {
-			normalResponse("{\"success\": true}", w, r)
-		}
-		break
-	case http.MethodDelete:
-		rows, err := models.DelArticle(id)
-		if err != nil {
-			log.Fatal(err)
-			errorResponse("Parse Json failed", w, r)
-		} else {
-			normalResponse("{\"success\": true, \"affectedRows\": "+utils.IntegerToString(int(rows))+"}", w, r)
-		}
-		break
-	case http.MethodOptions:
-		corsResponse(w, r)
-		break
-	default:
-		http.NotFound(w, r)
+	hit := true
+	if qp.Get("h") != "" {
+		hit = false
+	}
+	article := models.GetArticle(id, hit)
+	jsonizeResponse(article, w)
+}
+
+
+func PutArticle(w http.ResponseWriter, r *http.Request) {
+	pm := r.URL.Path[len("/article/"):]
+	id := utils.StringToInteger(pm)
+	a, err := getArticleFromRequestBody(r.Body)
+	if err != nil {
+		log.Fatal(err)
+		errorResponse("Parse Json failed", w)
+	}
+	err = models.PutArticle(id, a)
+	if err != nil {
+		log.Fatal(err)
+		errorResponse("Update article failed", w)
+	} else {
+		normalResponse("{\"success\": true}", w)
+	}
+}
+func DelArticle(w http.ResponseWriter, r *http.Request) {
+	pm := r.URL.Path[len("/article/"):]
+	id := utils.StringToInteger(pm)
+	rows, err := models.DelArticle(id)
+	if err != nil {
+		log.Fatal(err)
+		errorResponse("Parse Json failed", w)
+	} else {
+		normalResponse("{\"success\": true, \"affectedRows\": "+utils.IntegerToString(int(rows))+"}", w)
 	}
 }
 
-func jsonizeResponse(data interface{}, w http.ResponseWriter, r *http.Request) {
+func jsonizeResponse(data interface{}, w http.ResponseWriter) {
 	jsonResponse, err := json.Marshal(data)
 	var response string
 	if err != nil {
 		log.Fatal(err)
-		errorResponse("Jsonize filed", w, r)
+		errorResponse("Jsonize filed", w)
 	} else {
 		response = string(jsonResponse)
-		normalResponse(response, w, r)
+		normalResponse(response, w)
 	}
 }
 
-func errorResponse(message string, w http.ResponseWriter, r *http.Request) {
+func errorResponse(message string, w http.ResponseWriter) {
 	var response = `{"error": true, "message":` + message + `}`
-	normalResponse(response, w, r)
+	normalResponse(response, w)
 }
 
-func normalResponse(response string, w http.ResponseWriter, r *http.Request) {
+func normalResponse(response string, w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json")
 	fmt.Fprint(w, string(response))
-}
-
-func corsResponse(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost")
-	w.Header().Set("Access-Control-Allow-Methods", "POST, PUT, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 }
 
 func getArticleFromRequestBody(reader io.Reader) (a models.Article, err error) {
