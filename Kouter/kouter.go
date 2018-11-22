@@ -42,7 +42,6 @@ func (k Kouter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		corsResponse(w)
 	} else {
 		for i, route := range *k.routes {
-			_, ok := route.handlers[method]
 			if handler, ok := route.handlers[method]; ok && route.IsWholeMatch(path) {
 				w.Header().Set("Access-Control-Allow-Origin", "http://localhost:4200")
 				route.FillParamsWithValue(path)
@@ -136,11 +135,11 @@ func (r *Route) IsWholeMatch(path string) bool {
 
 func (r *Route) FillParamsWithValue(path string) {
 	values := strings.Split(path, "/")
-	params := make(map[string]string)
+	p := make(map[string]string)
 	for i, field := range r.paramsHolder {
-		params[field] = values[i]
+		p[field] = values[i]
 	}
-	r.Params = params
+	r.Params = p
 }
 
 func unexpectedPanic(w http.ResponseWriter) {
