@@ -10,13 +10,13 @@ import (
 
 func main() {
 	models.InitDB()
-	k := Kouter.GetK()
+	k := Kouter.NewK()
 
-	k.Get("/article", handlers.GetArticles)
-	k.Post("/article", handlers.PostArticle)
-	k.Get("/article/", handlers.GetArticle)
-	k.Put("/article/", handlers.PutArticle)
-	k.Delete("/article/", handlers.DelArticle)
+	k.Get("article", handlers.GetArticles)
+	k.Post("article", handlers.PostArticle)
+	k.Get("article/{:id}", handlers.GetArticle)
+	k.Put("article/{:id}", handlers.PutArticle)
+	k.Delete("article/{:id}", handlers.DelArticle)
 	log.Println("server start")
 	log.Fatal(http.ListenAndServe(":8088", k))
 }

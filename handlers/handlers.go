@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/Kydz/kydz.api/Kouter"
 	"github.com/Kydz/kydz.api/models"
 	"github.com/Kydz/kydz.api/utils"
 	"io"
@@ -41,8 +42,7 @@ func PostArticle(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetArticle(w http.ResponseWriter, r *http.Request) {
-	pm := r.URL.Path[len("/article/"):]
-	id := utils.StringToInteger(pm)
+	id := utils.StringToInteger(Kouter.GetCurrentRoute().Params["id"])
 	qp := r.URL.Query()
 	hit := true
 	if qp.Get("h") != "" {
@@ -54,8 +54,7 @@ func GetArticle(w http.ResponseWriter, r *http.Request) {
 
 
 func PutArticle(w http.ResponseWriter, r *http.Request) {
-	pm := r.URL.Path[len("/article/"):]
-	id := utils.StringToInteger(pm)
+	id := utils.StringToInteger(Kouter.GetCurrentRoute().Params["id"])
 	a, err := getArticleFromRequestBody(r.Body)
 	if err != nil {
 		log.Fatal(err)
@@ -70,8 +69,7 @@ func PutArticle(w http.ResponseWriter, r *http.Request) {
 	}
 }
 func DelArticle(w http.ResponseWriter, r *http.Request) {
-	pm := r.URL.Path[len("/article/"):]
-	id := utils.StringToInteger(pm)
+	id := utils.StringToInteger(Kouter.GetCurrentRoute().Params["id"])
 	rows, err := models.DelArticle(id)
 	if err != nil {
 		log.Fatal(err)
