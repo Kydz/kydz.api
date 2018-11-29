@@ -1,7 +1,9 @@
 package Kouter
 
 import (
+	"errors"
 	"fmt"
+	"github.com/Kydz/kydz.api/Konfigurator"
 	"log"
 	"net/http"
 	"regexp"
@@ -11,9 +13,16 @@ import (
 const AnalyzePattern = "{:\\w+}"
 const WholeMatchPattern = "{?:?\\w+}?"
 
-type Kandler func(w http.ResponseWriter, r *http.Request)
+type Kandler func(http.ResponseWriter, *http.Request)
+
+type Kiddleware func(Kandler) Kandler
 
 var currentRoute *Route
+var kon *Konfigurator.Kon
+
+func init() {
+	kon = Konfigurator.GetKon()
+}
 
 func setCurrentRoute(r *Route) {
 	currentRoute = r
@@ -43,9 +52,10 @@ func (k Kouter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	} else {
 		for i, route := range *k.routes {
 			if handler, ok := route.handlers[method]; ok && route.IsWholeMatch(path) {
-				w.Header().Set("Access-Control-Allow-Origin", "http://localhost:4200")
+				w.Header().Set("Access-Control-Allow-Origin", kon.Site)
 				route.FillParamsWithValue(path)
 				setCurrentRoute(&route)
+				handler = route.HandleKiddleware(handler)
 				http.HandlerFunc(handler).ServeHTTP(w, r)
 				break
 			} else {
@@ -57,22 +67,27 @@ func (k Kouter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (k *Kouter) Get(pattern string, handler Kandler) {
-	addRoute(k, pattern, http.MethodGet, handler)
+func (k *Kouter) Get(pattern string, handler Kandler) *Route {
+	r, _ := k.addRoute(pattern, http.MethodGet, handler)
+	return r
 }
-func (k *Kouter) Post(pattern string, handler Kandler) {
-	addRoute(k, pattern, http.MethodPost, handler)
+func (k *Kouter) Post(pattern string, handler Kandler) *Route {
+	r, _ := k.addRoute(pattern, http.MethodPost, handler)
+	return r
 }
-func (k *Kouter) Put(pattern string, handler Kandler) {
-	addRoute(k, pattern, http.MethodPut, handler)
+func (k *Kouter) Put(pattern string, handler Kandler) *Route {
+	r, _ := k.addRoute(pattern, http.MethodPut, handler)
+	return r
 }
-func (k *Kouter) Delete(pattern string, handler Kandler) {
-	addRoute(k, pattern, http.MethodDelete, handler)
+func (k *Kouter) Delete(pattern string, handler Kandler) *Route {
+	r, _ := k.addRoute(pattern, http.MethodDelete, handler)
+	return r
 }
 
-func addRoute(k *Kouter, pattern string, method string, handler Kandler) {
+func (k *Kouter) addRoute(pattern string, method string, handler Kandler) (*Route, error) {
 	if len(*k.routes) == 0 {
 		*k.routes = append(*k.routes, *newR(pattern, method, handler))
+		return &(*k.routes)[len(*k.routes) -1], nil
 	} else {
 		for i, route := range *k.routes {
 			if route.IsWholeMatch(pattern) {
@@ -80,15 +95,17 @@ func addRoute(k *Kouter, pattern string, method string, handler Kandler) {
 					panic("trying to add duplicate routers, pattern: " + pattern + ", method: " + method)
 				} else {
 					route.handlers[method] = handler
+					return &route, nil
 				}
 			} else {
 				if i == len(*k.routes) - 1 {
 					*k.routes = append(*k.routes, *newR(pattern, method, handler))
+					return &(*k.routes)[len(*k.routes) -1], nil
 				}
 			}
 		}
 	}
-
+	return nil, errors.New("no router added")
 }
 
 func newR(pattern string, method string, handler Kandler) *Route {
@@ -104,6 +121,7 @@ func newR(pattern string, method string, handler Kandler) *Route {
 
 type Route struct {
 	pattern      string
+	kiddlewares  []Kiddleware
 	handlers     map[string]Kandler
 	paramsHolder map[int]string
 	wholeMatcher string
@@ -142,6 +160,18 @@ func (r *Route) FillParamsWithValue(path string) {
 	r.Params = p
 }
 
+func (r *Route) Kware(kid Kiddleware) *Route {
+	r.kiddlewares = append(r.kiddlewares, kid)
+	return r
+}
+
+func (r *Route) HandleKiddleware(k Kandler) Kandler{
+	for _, kid := range r.kiddlewares {
+		k = kid(k)
+	}
+	return k
+}
+
 func unexpectedPanic(w http.ResponseWriter) {
 	if recoveredErr := recover(); recoveredErr != nil {
 		log.Print(recoveredErr)
@@ -150,8 +180,11 @@ func unexpectedPanic(w http.ResponseWriter) {
 }
 
 func corsResponse(w http.ResponseWriter) {
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:4200")
+	w.Header().Set("Access-Control-Allow-Origin", kon.Site)
 	w.Header().Set("Access-Control-Allow-Methods", "POST, PUT, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-	fmt.Fprint(w)
+	_, err := fmt.Fprint(w)
+	if err != nil {
+		log.Printf("CORS Error: %+v", err)
+	}
 }

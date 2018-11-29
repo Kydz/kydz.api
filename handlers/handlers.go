@@ -68,6 +68,7 @@ func PutArticle(w http.ResponseWriter, r *http.Request) {
 		normalResponse("{\"success\": true}", w)
 	}
 }
+
 func DelArticle(w http.ResponseWriter, r *http.Request) {
 	id := utils.StringToInteger(Kouter.GetCurrentRoute().Params["id"])
 	rows, err := models.DelArticle(id)

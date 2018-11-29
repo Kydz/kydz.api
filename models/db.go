@@ -2,16 +2,22 @@ package models
 
 import (
 	"database/sql"
+	"github.com/Kydz/kydz.api/Konfigurator"
 	"log"
 
 	_ "github.com/go-sql-driver/mysql"
 )
 
 var db *sql.DB
+var kon *Konfigurator.Kon
+
+func init() {
+	kon = Konfigurator.GetKon()
+}
 
 func InitDB() {
 	var err error
-	db, err = sql.Open("mysql", "root:1989222@/kydz")
+	db, err = sql.Open("mysql", kon.Db.Account + ":" + kon.Db.Pass + "@/" + kon.Db.Schema)
 	if err != nil {
 		log.Print("Error: Opening [kydz] failed:")
 		panic(err)
