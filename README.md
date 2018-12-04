@@ -6,7 +6,7 @@ API server for http://kydz.site in Go
 
 A light weight Router that supports named parameters.
 
-#### Usage
+### Usage
 
 Simply call Kouter.NewK() will get you a new instance of Kouter.
 Then you are good to go.
@@ -15,7 +15,7 @@ Then you are good to go.
 k := Kouter.NewK();
 ```
 
-##### Add Routes
+#### Add Routes
 Kouter provides a straight forward mean to add route, based on
 `Http Method` you are going to coupe with, you can call .Get(), .Post(), etc...
 
@@ -29,13 +29,13 @@ k.Put("books/{:id}", UpdateBookHandler)
 k.Del("books/{:id}", DeleteBookHandler)
 ```
 
-##### Compatibility
+#### Compatibility
 
 For all `***Handler`, you can consider each of them as a [http.HandlerFunc](https://golang.org/pkg/net/http/#HandlerFunc) type,
 it is a standard Go type so you can easily migrate your project to
 implement Kouter.
 
-##### Named parameter
+#### Named parameter
 
 Guess you have noticed the `{:id}` notation, this is how Kouter handles named
 parameters, by registering `"books/{:id}"` into Kouter, Kouter will know
@@ -53,6 +53,33 @@ k.Get("books/{:publisher}/{:category}", GetBookHandler)
 ```
 Access them with their names, how easy is that.
 
-#### TODO
-- add support for middle ware
+#### Middleware
+
+You can add middleware by chaining a `Kware` method after add routes, a middleware is typically a function that
+ follows the signature: `func SomeMiddleware(next Kouter.Kandler) Kouter.Kandler {}`, here is an example.
+ > Kandler is nothing but a re-name of [http.HandlerFunc](https://golang.org/pkg/net/http/#HandlerFunc)
+
+```go
+func AuthMiddleware(next Kouter.Kandler) Kouter.Kandler {
+    return func(w http.ResponseWritter, r *http.Request) {
+        // get a user and some do auth check
+        ...
+        if user.CanLogin() {
+            next(w, r)
+        } else {
+            http.Error(w, "access deny", http.StatusUnauthorized)
+        }
+    }
+}
+
+func main() {
+    k := Kouter.NewK()
+    k.Post("books/{:id}", CreateNewBookHandler).Kware(AuthMiddleware)
+    log.Fatal(http.ListenAndServe(":8088", k))
+}
+```
+
+Also you can add multiple middleware by pass them all into the Kware() method, like so: `Kware(middleware1, middleware2, middleware3...)`
+
+### TODO
 - enhance named parameters with customizable regex
