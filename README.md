@@ -79,7 +79,7 @@ func main() {
 }
 ```
 
-Also you can add multiple middleware by pass them all into the Kware() method, like so: `Kware(middleware1, middleware2, middleware3...)`
+Also you can add multiple middlewares by passing them all into the Kware() method, like so: `Kware(middleware1, middleware2, middleware3...)`
 
 ### TODO
 - enhance named parameters with customizable regex
