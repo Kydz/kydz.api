@@ -15,8 +15,10 @@ func main() {
 	k.Get("article", handlers.GetArticles)
 	k.Post("article", handlers.PostArticle)
 	k.Get("article/{:id}", handlers.GetArticle)
-	k.Put("article/{:id}", handlers.PutArticle)
+	k.Put("article/{:id}", handlers.PutArticle).Kware(handlers.AuthMiddleware)
 	k.Delete("article/{:id}", handlers.DelArticle)
+	k.Get("admin/init", handlers.GetInit)
+	k.Post("admin/login", handlers.PostLogin)
 	log.Println("server start")
 	log.Fatal(http.ListenAndServe(":8088", k))
 }

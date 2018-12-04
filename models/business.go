@@ -1,9 +1,14 @@
 package models
 
 import (
+	"crypto/sha256"
 	"database/sql"
+	"errors"
+	"fmt"
 	"github.com/Kydz/kydz.api/Konfigurator"
+	"github.com/Kydz/kydz.api/utils"
 	"log"
+	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -60,6 +65,40 @@ func PostArticle(a Article) (id int64, err error) {
 func DelArticle(id int) (int64, error) {
 	return deleteArticle(id)
 }
+
+func Login(rp string) (string, error) {
+	a := queryAdmin()
+	h := sha256.New()
+	h.Write([]byte(a.Salt + rp))
+	p := fmt.Sprintf("%x", h.Sum(nil))
+	if p == a.Password {
+		return maskAdminToken(a.Token), nil
+	}
+	return "", errors.New("wrong password")
+}
+
+func CheckAdminToken(t string) bool {
+	a := queryAdmin()
+	return t == maskAdminToken(a.Token)
+}
+
+func InitAdmin() error {
+	h := sha256.New()
+	s := []byte(kon.AdminPass)
+	h.Write(s)
+	p := fmt.Sprintf("%x", h.Sum(nil))
+	err := initAdmin(utils.GenerateRandomString(8), string(p))
+	return err
+}
+
+func maskAdminToken(t string) string {
+	h := sha256.New()
+	n := time.Now()
+	h.Write([]byte(t + utils.IntegerToString(n.Year()) + utils.IntegerToString(int(n.Month()))))
+	t = fmt.Sprintf("%x", h.Sum(nil))
+	return string(t)
+}
+
 
 type ArticleList struct {
 	Total int       `json:"total"`

@@ -71,14 +71,17 @@ func (k *Kouter) Get(pattern string, handler Kandler) *Route {
 	r, _ := k.addRoute(pattern, http.MethodGet, handler)
 	return r
 }
+
 func (k *Kouter) Post(pattern string, handler Kandler) *Route {
 	r, _ := k.addRoute(pattern, http.MethodPost, handler)
 	return r
 }
+
 func (k *Kouter) Put(pattern string, handler Kandler) *Route {
 	r, _ := k.addRoute(pattern, http.MethodPut, handler)
 	return r
 }
+
 func (k *Kouter) Delete(pattern string, handler Kandler) *Route {
 	r, _ := k.addRoute(pattern, http.MethodDelete, handler)
 	return r
@@ -94,8 +97,8 @@ func (k *Kouter) addRoute(pattern string, method string, handler Kandler) (*Rout
 				if _, ok := route.handlers[method]; ok {
 					panic("trying to add duplicate routers, pattern: " + pattern + ", method: " + method)
 				} else {
-					route.handlers[method] = handler
-					return &route, nil
+					(&(*k.routes)[i]).handlers[method] = handler
+					return &(*k.routes)[i], nil
 				}
 			} else {
 				if i == len(*k.routes) - 1 {
@@ -160,9 +163,10 @@ func (r *Route) FillParamsWithValue(path string) {
 	r.Params = p
 }
 
-func (r *Route) Kware(kid Kiddleware) *Route {
-	r.kiddlewares = append(r.kiddlewares, kid)
-	return r
+func (r *Route) Kware(kids... Kiddleware) {
+	for _, kid := range kids {
+		r.kiddlewares = append(r.kiddlewares, kid)
+	}
 }
 
 func (r *Route) HandleKiddleware(k Kandler) Kandler{

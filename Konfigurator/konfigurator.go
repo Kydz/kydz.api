@@ -13,6 +13,7 @@ type Kon struct {
 		Pass    string `json:"pass"`
 		Schema string `json:"schema"`
 	} `json:"db"`
+	AdminPass string `json:"admin_pass"`
 }
 
 var kon *Kon

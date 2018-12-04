@@ -119,8 +119,6 @@ func getORM(a Article) ([]string, []interface{}) {
 	lenA := elA.NumField()
 	fields := make([]string, lenA)
 	values := make([]interface{}, lenA)
-	log.Print("in")
-	log.Printf("%+v", a)
 	j := 0
 	for i := 0; i < lenA; i++ {
 		value := elA.Field(i).Interface()
