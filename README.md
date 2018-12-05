@@ -56,15 +56,14 @@ Access them with their names, how easy is that.
 #### Middleware
 
 You can add middleware by chaining a `Kware` method after add routes, a middleware is typically a function that
- follows the signature: `func SomeMiddleware(next Kouter.Kandler) Kouter.Kandler {}`, here is an example.
- > Kandler is nothing but a re-name of [http.HandlerFunc](https://golang.org/pkg/net/http/#HandlerFunc)
+ follows the signature: `func SomeMiddleware(next http.HandlerFunc) http.HandlerFunc {}`, here is an example.
 
 ```go
-func AuthMiddleware(next Kouter.Kandler) Kouter.Kandler {
+func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
     return func(w http.ResponseWritter, r *http.Request) {
-        // get a user and some do auth check
+        // get a user and do some auth check
         ...
-        if user.CanLogin() {
+        if user.CanAccess() {
             next(w, r)
         } else {
             http.Error(w, "access deny", http.StatusUnauthorized)

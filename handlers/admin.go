@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"github.com/Kydz/kydz.api/Kouter"
 	"github.com/Kydz/kydz.api/models"
 	"io/ioutil"
 	"log"
@@ -35,7 +34,7 @@ func PostLogin(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func AuthMiddleware(next Kouter.Kandler) Kouter.Kandler {
+func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		t := r.Header.Get("x-auth-token")
 		if models.CheckAdminToken(t) {

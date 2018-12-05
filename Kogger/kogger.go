@@ -1,6 +1,9 @@
 package Kogger
 
-import "fmt"
+import (
+	"github.com/Kydz/kydz.api/Konfigurator"
+	"log"
+)
 
 var k *kogger
 
@@ -14,12 +17,16 @@ type kogger struct {
 
 func init() {
 	k = new(kogger)
-	k.DebugEnabled = true
+	k.DebugEnabled = !Konfigurator.GetKon().IsProd()
 }
 
-func Debug(log string, v ...interface{}) {
+func Debug(s string, v ...interface{}) {
 	if k.DebugEnabled {
-		fmt.Printf(log, v...)
+		if len(v) > 0 {
+			log.Printf(s, v...)
+		} else {
+			log.Println(s)
+		}
 	}
 }
 

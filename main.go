@@ -13,10 +13,10 @@ func main() {
 	k := Kouter.NewK()
 
 	k.Get("article", handlers.GetArticles)
-	k.Post("article", handlers.PostArticle)
+	k.Post("article", handlers.PostArticle).Kware(handlers.AuthMiddleware)
 	k.Get("article/{:id}", handlers.GetArticle)
 	k.Put("article/{:id}", handlers.PutArticle).Kware(handlers.AuthMiddleware)
-	k.Delete("article/{:id}", handlers.DelArticle)
+	k.Delete("article/{:id}", handlers.DelArticle).Kware(handlers.AuthMiddleware)
 	k.Get("admin/init", handlers.GetInit)
 	k.Post("admin/login", handlers.PostLogin)
 	log.Println("server start")
