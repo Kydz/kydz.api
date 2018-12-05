@@ -1,6 +1,6 @@
 # kydz.api
 
-API server for http://kydz.site in Go
+API server for http://www.kydz.site in Go
 
 ## About Kouter
 
