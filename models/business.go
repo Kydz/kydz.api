@@ -27,6 +27,7 @@ func InitDB() {
 		log.Print("Error: Opening [kydz] failed:")
 		panic(err)
 	}
+	db.SetConnMaxLifetime(time.Hour * 2)
 }
 
 func logQuery(qs string, args ... interface{}) {

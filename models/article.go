@@ -8,7 +8,7 @@ import (
 
 func queryArticleList(offset int, limit int) []Article {
 	var list []Article
-	qs := `SELECT id, title, brief FROM articles WHERE active = 1 limit ?, ?`
+	qs := `SELECT id, title, brief FROM articles WHERE active = 1 ORDER BY id DESC limit ?, ?`
 	logQuery(qs+"; with: %d, %d, %s", offset, limit, qs)
 	stmt, err := db.Prepare(qs)
 	if err != nil {
